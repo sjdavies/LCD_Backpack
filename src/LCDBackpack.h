@@ -3,7 +3,7 @@
 
 #include <inttypes.h>
 #include "Print.h"
-#include "Wire.h"
+#include <Wire.h>
 
 // commands
 #define LCD_CLEARDISPLAY 0x01
@@ -46,8 +46,9 @@
 class LCDBackpack : public Print {
 public:
   LCDBackpack(uint8_t i2c_address);
-  LCDBackpack(TwoWire port, uint8_t i2c_address);
+  LCDBackpack(TwoWire& port, uint8_t i2c_address);
     
+  void init();
   void begin(uint8_t cols, uint8_t rows, uint8_t charsize = LCD_5x8DOTS);
 
   void clear();
@@ -88,7 +89,5 @@ private:
   uint8_t _numlines;
   uint8_t _row_offsets[4];
 };
-
-extern TwoWire Wire;
 
 #endif  // LCDBACKPACK_H_
