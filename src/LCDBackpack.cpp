@@ -1,3 +1,14 @@
+/*
+ * LCDBackpack client code.
+ *
+ * Based on the original Arduino LiquidCrystal library. As the original LiquidCrystal.cpp had
+ * no author comments I'll attribute this to the entire Arduino project. This work is based
+ * on the github arduino project, version dated Dec 18, 2013.
+ *
+ * Stephen Davies
+ * May 10, 2015
+ */
+
 #include "LCDBackpack.h"
 
 #include <stdio.h>
@@ -40,7 +51,10 @@ void LCDBackpack::init()
     
     _displayfunction = LCD_1LINE | LCD_5x8DOTS;
     
-    begin(16, 1);
+    // Original code was failing (locking up) due to this line.
+    // Probably because TWI uses interrupts and they may be not enabled at this point.
+    // User will have to call this later i.e. during setup().
+    //begin(16, 1);
 }
 
 void LCDBackpack::begin(uint8_t cols, uint8_t lines, uint8_t dotsize)
@@ -59,47 +73,13 @@ void LCDBackpack::begin(uint8_t cols, uint8_t lines, uint8_t dotsize)
     
     // SEE PAGE 45/46 FOR INITIALIZATION SPECIFICATION!
     // according to datasheet, we need at least 40ms after power rises above 2.7V
-    // before sending commands. Arduino can turn on way before 4.5V so we'll wait 50
-    delayMicroseconds(50000);
-    
-    //put the LCD into 4 bit or 8 bit mode
-//    if (! (_displayfunction & LCD_8BITMODE)) {
-//        // this is according to the hitachi HD44780 datasheet
-//        // figure 24, pg 46
-//        
-//        // we start in 8bit mode, try to set 4 bit mode
-//        write4bits(0x03);
-//        delayMicroseconds(4500); // wait min 4.1ms
-//        
-//        // second try
-//        write4bits(0x03);
-//        delayMicroseconds(4500); // wait min 4.1ms
-//        
-//        // third go!
-//        write4bits(0x03);
-//        delayMicroseconds(150);
-//        
-//        // finally, set to 4-bit interface
-//        write4bits(0x02);
-//    } else {
-//        // this is according to the hitachi HD44780 datasheet
-//        // page 45 figure 23
-//        
-//        // Send function set command sequence
-//        command(LCD_FUNCTIONSET | _displayfunction);
-//        delayMicroseconds(4500);  // wait more than 4.1ms
-//        
-//        // second try
-//        command(LCD_FUNCTIONSET | _displayfunction);
-//        delayMicroseconds(150);
-//        
-//        // third go
-//        command(LCD_FUNCTIONSET | _displayfunction);
-//    }
+    // before sending commands. Arduino can turn on way before 4.5V and
+    // LCD backpack will need time to initialise the display.
+    delay(200);
     
     // finally, set # lines, font size, etc.
     command(LCD_FUNCTIONSET | _displayfunction);
-    
+
     // turn the display on with no cursor or blinking default
     _displaycontrol = LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF;
     display();
@@ -109,9 +89,9 @@ void LCDBackpack::begin(uint8_t cols, uint8_t lines, uint8_t dotsize)
     
     // Initialize to default text direction (for romance languages)
     _displaymode = LCD_ENTRYLEFT | LCD_ENTRYSHIFTDECREMENT;
+    
     // set the entry mode
     command(LCD_ENTRYMODESET | _displaymode);
-    
 }
 
 void LCDBackpack::setRowOffsets(int row0, int row1, int row2, int row3)
@@ -255,10 +235,11 @@ inline size_t LCDBackpack::write(uint8_t value)
 // write either command or data
 void LCDBackpack::send(uint8_t value, uint8_t mode)
 {
-    uint8_t control = (mode & 1) << 6;
-    
+    uint8_t out[2];
+    out[0] = (mode & 1) << 6;
+    out[1] = value;
+
     _port.beginTransmission(_i2c_address);
-    _port.write(control);
-    _port.write(value);
+    _port.write(out, 2);
     _port.endTransmission();
 }

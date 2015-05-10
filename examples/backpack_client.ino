@@ -1,8 +1,15 @@
 
+/*
+ * A simple example using the LCDBackpack module.
+ *
+ * Stephen Davies
+ * May 10, 2015
+ */
+
 #include <Wire.h>
 #include <LCDBackpack.h>
 
-LCDBackpack lcd(0x3A);
+LCDBackpack lcd(0x3A);  // NB. uses 7-bit I2C addressing (same as Wire)
 
 void setup() {
   // set up the LCD's number of columns and rows:

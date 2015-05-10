@@ -1,3 +1,16 @@
+/*
+ * LCDBackpack client header. LCD commands are passed over I2C to a remote LCDBackpack module.
+ *
+ * By default, the Wire port is used.
+ *
+ * Based on the original Arduino LiquidCrystal library. As the original LiquidCrystal.h had
+ * no author comments I'll attribute this to the entire Arduino project. This work is based
+ * on the github arduino project, version dated Dec 18, 2013.
+ *
+ * Stephen Davies
+ * May 10, 2015
+ */
+
 #ifndef LCDBACKPACK_H_
 #define LCDBACKPACK_H_
 
@@ -45,10 +58,24 @@
 
 class LCDBackpack : public Print {
 public:
+  /*
+   * Regular constructor, note - i2c_address is 7 bit I2C address (see Wire).
+   */
   LCDBackpack(uint8_t i2c_address);
+   
+  /*
+   * Constructor intended for use with Arduino Due (has two I2C ports) and user wants
+   * to select which port they use i.e. Wire1.
+   */
   LCDBackpack(TwoWire& port, uint8_t i2c_address);
     
   void init();
+    
+  /*
+   * User needs to call this at least once e.g. from setup(). This is because interrupts
+   * do not get enabled until setup() and calling this from the constructor of an object
+   * in global scope results in lockup.
+   */
   void begin(uint8_t cols, uint8_t rows, uint8_t charsize = LCD_5x8DOTS);
 
   void clear();
@@ -83,8 +110,6 @@ private:
   uint8_t _displayfunction;
   uint8_t _displaycontrol;
   uint8_t _displaymode;
-
-  //uint8_t _initialized;
 
   uint8_t _numlines;
   uint8_t _row_offsets[4];
